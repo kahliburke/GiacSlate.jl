@@ -1,10 +1,5 @@
 try; import KaimonSlate; catch; error("This is a Kaimon Slate notebook — running it as plain Julia needs the KaimonSlate runtime in this environment. Add it with `import Pkg; Pkg.add(\"KaimonSlate\")`, or open it in Kaimon Slate."); end; KaimonSlate.standalone!(@__MODULE__; dir=@__DIR__)
 
-#%% md id=intro
-@md"""
-# New Notebook
-"""
-
 #%% md id=title title
 @md"""
 # Custom Controls Playground
@@ -116,45 +111,67 @@ else
         Markdown.parse("\$\$\\texttt{$(replace(cmd, "\\" => "\\backslash "))} \\;\\Rightarrow\\; $r\$\$")
 end
 
-#%% md id=mathcode_md
+#%% md id=mdmath_hdr
 @md"""
-## 🧪 Sandbox: live math *inline* in a code editor
+## Giac math variables inside markdown
 
-Our own isolated CodeMirror 6 editor (esm.sh — not Slate's cell editor, no core
-changes). The `math"…"` literals render as **live, always-editable math fields
-right in the code**. Edit a field and watch the backing source update below.
-Press **Ctrl/Cmd-M** to drop a fresh math field at the cursor.
+Define a math variable in a code cell, then reference it in **prose** — inline
+and display — via `{{ gmath(…) }}` / `{{ gdisplay(…) }}`. It renders through the
+giac→LaTeX conversion and re-renders when the variable changes.
 """
 
-#%% code id=mathcode_eval_handler hidecode
-# Bridge: the sandbox editor's "Run" button calls this. It evaluates the Julia code
-# (with each math"…" already substituted for a GiacExpr) in this notebook's module and
-# returns the result as LaTeX (for a GiacExpr) or text.
-let mod = @__MODULE__
-    slate_on("mathcode_eval", args -> begin
-        try
-            v = include_string(mod, String(args.code))
-            v isa GiacExpr ? Dict("ok" => true, "latex" => tex(v)) :
-                             Dict("ok" => true, "text" => string(v))
-        catch e
-            Dict("ok" => false, "error" => sprint(showerror, e))
-        end
-    end)
-end
-"mathcode_eval handler registered"
+#%% code id=mdmath_vars
+Hs = giac"1/(s^2 + 2*s + 5)"                       # a transfer function
+yt = giac"ilaplace(1/(s*(s^2+2*s+5)), s, t)"       # its step response
+(string(Hs), string(yt))
 
-#%% code id=mathcode_mount
-WebPage(
-  html = """
-    <div id="mathcode-host"></div>
-    <div style="margin-top:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-      <button id="mathcode-run" style="font:13px/1 inherit;padding:6px 14px;cursor:pointer;
-        color:#fff;background:var(--accent,#6cb6ff);border:none;border-radius:7px">Run ▶</button>
-      <math-field id="mathcode-result" read-only style="display:none"></math-field>
-      <span id="mathcode-err" style="font:12px monospace"></span>
-    </div>
-    <div style="margin-top:10px;color:var(--text,#d7dae1);opacity:.5;font:12px monospace">backing source:</div>
-    <pre id="mathcode-doc" style="margin:2px 0;color:var(--text,#d7dae1);opacity:.6;font:12px monospace;white-space:pre-wrap"></pre>
-  """,
-  js = @asset("assets/mathcode.js"),
-)
+#%% md id=mdmath_prose
+@md"""
+The system has transfer function {{ gmath(Hs) }}, a second-order response. Its
+unit-step response, computed by Giac's inverse Laplace transform, is
+
+{{ gdisplay(yt) }}
+
+which settles to {{ gmath(giac"limit(1/(s^2+2*s+5)*5, s, 0)/5") }} as $t \to \infty$.
+"""
+
+#%% md id=celled_md
+@md"""
+## 🎯 The real thing — `giac"…"` live in a code cell
+
+No sandbox. The boot cell below registers an **editor extension** (via the new
+`slateRegisterEditorExtension` hook) + two giac↔LaTeX bridge handlers. After a
+reload, any `giac"…"` literal in a **real code cell** renders as a live math field —
+and the cell still runs natively (`@giac_str`). Ctrl/Cmd-M inserts one.
+"""
+
+#%% code id=celled_boot hidecode nocache
+# Bridge handlers (giac source ↔ LaTeX / MathJSON), then register the editor extension.
+slate_on("giac_tex", a -> Dict("latex" => GiacSlate.giac_src_to_tex(String(a.src))))
+slate_on("giac_src", a -> Dict("src"   => GiacSlate.mathjson_to_giac_src(String(a.mj))))
+GiacSlate.inline_math_boot()
+
+#%% code id=celled_demo
+@bind num Slider(1:5)
+
+#%% code id=a8e696
+# After reload, the giac"…" below renders as a live math field — and this cell runs.
+H = giac"(x+19)"
+ex = expand(1 / H^num)
+ex2 = expand((x+num)^3)
+ex3=giac"((1)/((x+39)))^(3)"
+expand(giac"((x+6))^(5)")
+
+#%% md id=aaa081
+@md"""
+
+Here is some inline math ${{ ex }}$ and some display math $${{ ex }}$$
+
+and ex2: 
+
+{{ex2}}
+
+ex3:
+1. Bullet
+2. Math ${{ ex3 }}$
+"""
