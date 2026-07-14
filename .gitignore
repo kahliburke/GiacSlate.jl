@@ -1,0 +1,13 @@
+# Julia package: pin deps via Project.toml, not the resolved Manifest
+/Manifest.toml
+/docs/build/
+
+# Local Claude/editor settings
+.claude/settings.local.json
+
+# Slate notebook data + scratch
+/data/
+**/.ipynb_checkpoints/
+
+# OS
+.DS_Store
