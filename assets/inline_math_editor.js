@@ -75,6 +75,13 @@
          below so the two don't nest/overlap */
       .giacchip:focus-within { border-color:transparent;
         box-shadow:0 0 0 2px color-mix(in srgb, var(--accent,#6cb6ff) 55%, transparent); }
+      /* invalid math / GIAC error — the edit wasn't saved (hover, or the popover) */
+      .giacchip.giac-err { border-color:#f56c6c;
+        box-shadow:0 0 0 2px color-mix(in srgb, #f56c6c 35%, transparent); }
+      .giac-errpop { position:fixed; z-index:99999; max-width:340px;
+        background:#2b1618; color:#ffb4b4; border:1px solid #f56c6c; border-radius:6px;
+        padding:4px 9px; font:12px/1.45 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+        box-shadow:0 4px 14px rgba(0,0,0,.45); pointer-events:none; }
       .giacchip math-field { font-size:1em; color:var(--text,#d7dae1); background:transparent;
         border:none; outline:none; min-width:22px;
         --caret-color:var(--accent,#6cb6ff); --primary-color:var(--accent,#6cb6ff);
@@ -98,15 +105,41 @@
 
   // ── bridge to Julia (slate_on handlers the boot cell registers) ──
   const texCache = new Map();                     // giac source → LaTeX (display)
-  const giacTex = async src => {
+  const giacTex = async src => {                  // giac source → { latex, ok, error }
     if (texCache.has(src)) return texCache.get(src);
-    let latex = '';
-    try { const r = await window.slateCall('giac_tex', { src }); latex = (r && r.latex) || ''; } catch (e) {}
-    texCache.set(src, latex); return latex;
+    let res;
+    try { res = (await window.slateCall('giac_tex', { src })) || {}; }
+    catch (e) { res = { error: String((e && e.message) || e) }; }
+    texCache.set(src, res); return res;
   };
-  const giacSrc = async mj => {                    // MathJSON → giac source (write-back)
-    try { const r = await window.slateCall('giac_src', { mj }); return (r && r.src) || ''; } catch (e) { return ''; }
+  const giacSrc = async mj => {                    // MathJSON → { src, ok, error } (write-back)
+    try { return (await window.slateCall('giac_src', { mj })) || {}; }
+    catch (e) { return { error: String((e && e.message) || e) }; }
   };
+
+  // Pull a readable message out of a MathLive "Error" MathJSON node (what's wrong + where).
+  const mjError = mj => {
+    let found = null;
+    const walk = x => { if (found || !Array.isArray(x)) return; if (x[0] === 'Error') { found = x; return; } x.forEach(walk); };
+    try { walk(JSON.parse(mj)); } catch (e) {}
+    if (!found) return 'invalid expression';
+    const cause = String(found[1] || '').replace(/'/g, '');
+    let where = found[2];
+    where = (Array.isArray(where) && where[0] === 'LatexString') ? String(where[1] || '').replace(/'/g, '') : '';
+    return where ? `${cause} near "${where}"` : (cause || 'invalid expression');
+  };
+  // A small floating error popover anchored under a field (auto-hides).
+  let _errPop;
+  const showErrPop = (anchor, msg) => {
+    if (!_errPop) { _errPop = document.createElement('div'); _errPop.className = 'giac-errpop'; document.body.appendChild(_errPop); }
+    _errPop.textContent = '⚠ ' + msg;
+    const r = anchor.getBoundingClientRect();
+    _errPop.style.left = Math.round(r.left) + 'px';
+    _errPop.style.top = Math.round(r.bottom + 5) + 'px';
+    _errPop.style.display = 'block';
+    clearTimeout(_errPop._t); _errPop._t = setTimeout(() => { _errPop.style.display = 'none'; }, 6000);
+  };
+  const hideErrPop = () => { if (_errPop) _errPop.style.display = 'none'; };
 
   // A live math field standing in for one giac"…" literal. `src` is the GIAC source.
   class GiacWidget extends WidgetType {
@@ -118,7 +151,15 @@
       wrap.className = 'giacchip';
       const mf = document.createElement('math-field');
       mf.setAttribute('math-virtual-keyboard-policy', 'manual');
-      giacTex(this.src).then(latex => { mf.value = latex; });   // async: giac source → LaTeX
+      const flagErr = msg => { wrap.classList.add('giac-err'); wrap.title = msg; showErrPop(wrap, msg); };
+      const clearErr = () => { wrap.classList.remove('giac-err'); wrap.removeAttribute('title'); hideErrPop(); };
+      mf.addEventListener('input', hideErrPop);   // typing to fix it → dismiss the message
+      // async: giac source → LaTeX. On a GIAC error, show the RAW source (not blank) in a red
+      // field so what's there stays visible/editable — the cell itself errors when run.
+      giacTex(this.src).then(res => {
+        if (res.error || res.ok === false) { mf.value = this.src; flagErr('GIAC error: ' + (res.error || 'invalid source')); }
+        else { mf.value = res.latex || ''; clearErr(); }
+      });
 
       // current inner-source range, read LIVE from the DOM position (never stale offsets)
       const liveRange = () => {
@@ -131,21 +172,29 @@
         return { innerFrom: start + is, innerTo: start + ie };
       };
       let exiting = false;
-      // MathLive → MathJSON → giac source, written back to the literal (deferred + async).
+      // Write `text` into the literal (deferred; optionally move the caret out into the code).
+      const writeBack = (dir, text) => requestAnimationFrame(() => {
+        const r = liveRange(); if (!r) return;
+        const tr = { changes: { from: r.innerFrom, to: r.innerTo, insert: text } };
+        if (dir) {
+          const end = r.innerFrom + text.length + CLOSE.length;
+          tr.selection = { anchor: dir === 'backward' ? r.innerFrom - OPEN.length : end };
+        }
+        try { cmView.dispatch(tr); if (dir) cmView.focus(); } catch (e) {}
+      });
+      // Commit on leave. Valid math writes back as giac source; INVALID input is left in the
+      // field untouched and flagged red (not committed and not re-rendered through GIAC — which
+      // would normalise/lose it, e.g. `=1+5` → `1+5`). Fix it and it commits.
       const sync = dir => {
         if (!dir && !mf.isConnected) return;
         let mj = mf.getValue('math-json'); if (typeof mj !== 'string') mj = JSON.stringify(mj);
-        if (mj.indexOf('"Error"') !== -1) return;
-        giacSrc(mj).then(src => {
-          requestAnimationFrame(() => {
-            const r = liveRange(); if (!r) return;
-            const tr = { changes: { from: r.innerFrom, to: r.innerTo, insert: src } };
-            if (dir) {
-              const end = r.innerFrom + src.length + CLOSE.length;
-              tr.selection = { anchor: dir === 'backward' ? r.innerFrom - OPEN.length : end };
-            }
-            try { cmView.dispatch(tr); if (dir) cmView.focus(); } catch (e) {}
-          });
+        if (mj.indexOf('"Error"') !== -1) {            // MathLive couldn't parse it → keep it, flag, don't commit
+          flagErr('not valid math: ' + mjError(mj));
+          return;
+        }
+        giacSrc(mj).then(res => {
+          if (res.error) { flagErr('GIAC error: ' + res.error); return; }
+          clearErr(); writeBack(dir, res.src || '');
         });
       };
       const exit = dir => { exiting = true; sync(dir || 'forward'); };

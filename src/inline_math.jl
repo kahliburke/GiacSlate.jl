@@ -35,8 +35,14 @@ a markdown cell's `{{ … }}` interpolation to typeset a code-cell math variable
 gmath(e)    = "\$" * _giac_tex(e) * "\$"
 gdisplay(e) = "\$\$" * _giac_tex(e) * "\$\$"
 
-# giac source → LaTeX (display side of the editor bridge).
-giac_src_to_tex(src::AbstractString) = isempty(strip(src)) ? "" : _giac_tex(Giac.giac_eval(String(src)))
+# giac source → LaTeX (display side of the editor bridge). GIAC is lenient — it returns
+# `undef` for malformed input instead of throwing — so treat that as an error too.
+function giac_src_to_tex(src::AbstractString)
+    isempty(strip(src)) && return ""
+    g = Giac.giac_eval(String(src))
+    strip(string(g)) == "undef" && error("not a valid GIAC expression")
+    _giac_tex(g)
+end
 
 # MathLive MathJSON → giac SOURCE string (write-back side). Empty / error payloads → "".
 function mathjson_to_giac_src(json::AbstractString)
@@ -70,7 +76,19 @@ editor-extension registration to render. Use it in a (hidecode) cell as:
     GiacSlate.inline_math_boot(slate_on)
 """
 function inline_math_boot(slate_on)
-    slate_on("giac_tex", a -> Dict("latex" => giac_src_to_tex(String(a.src))))
-    slate_on("giac_src", a -> Dict("src"   => mathjson_to_giac_src(String(a.mj))))
+    slate_on("giac_tex", a -> begin
+        try
+            Dict("latex" => giac_src_to_tex(String(a.src)), "ok" => true)
+        catch e
+            Dict("latex" => "", "ok" => false, "error" => sprint(showerror, e))
+        end
+    end)
+    slate_on("giac_src", a -> begin
+        try
+            Dict("src" => mathjson_to_giac_src(String(a.mj)), "ok" => true)
+        catch e
+            Dict("src" => "", "error" => sprint(showerror, e))
+        end
+    end)
     return InlineMathBoot()
 end

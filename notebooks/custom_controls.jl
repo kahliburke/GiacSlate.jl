@@ -70,7 +70,8 @@ GiacSlate.inline_math_boot(slate_on)
 H = giac"(x+19)"
 ex = expand(1 / H^num)
 ex2 = expand((x+num)^3)
-ex3=giac"11"
+ex3=giac"=111+5"
+
 expand(giac"((x+6))^(5)")
 
 #%% md id=aaa081
