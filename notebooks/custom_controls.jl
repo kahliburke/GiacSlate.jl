@@ -70,9 +70,14 @@ GiacSlate.inline_math_boot(slate_on)
 H = giac"(x+19)"
 ex = expand(1 / H^num)
 ex2 = expand((x+num)^3)
-ex3=giac"=111+5"
+ex3=giac"(5+111)" + factor(giac"((x)^(4)+-1)") - Giac.det(giac"matrix([[1,2,4],[5,6,1],[4,6,1]])")
 
 expand(giac"((x+6))^(5)")
+
+@show ex3
+
+#%% code id=19094f
+search_commands_by_description("matrix", n=10)
 
 #%% md id=aaa081
 @md"""
