@@ -10,7 +10,7 @@ A scratchpad for the `slateRegisterWidget` extension point: the MathLive math
 field, and whether GIAC commands can run *inside* it.
 """
 
-#%% code id=setup hidecode
+#%% code id=setup
 using Giac
 using Giac.Commands: expand, factor, simplify, diff, integrate, limit, solve, partfrac
 using GiacSlate
@@ -21,21 +21,21 @@ using Markdown
 @giac_var s
 @giac_var a
 
-tex(e) = strip(sprint(show, MIME("text/latex"), e), ['$', '\n', ' '])
 "ready — Giac, GiacSlate, commands loaded; variables x, y, s, a"
 
 #%% md id=mdmath_hdr
 @md"""
 ## Giac math variables inside markdown
 
-Define a math variable in a code cell, then reference it in **prose** — inline
-and display — via `{{ gmath(…) }}` / `{{ gdisplay(…) }}`. It renders through the
-giac→LaTeX conversion and re-renders when the variable changes.
+A math variable defined in a code cell can be dropped into **prose** and typeset —
+`gmath(x)` renders it inline, `gdisplay(x)` as a display block. Put the call inside
+Slate's double-curly-brace interpolation; it runs through the giac→LaTeX conversion
+and re-renders when the variable changes. The sentence below is a live example.
 """
 
 #%% code id=mdmath_vars
 Hs = giac"1/(s^2 + 2*s + 5)"                       # a transfer function
-yt = giac"ilaplace(1/(s*(s^2+2*s+5)), s, t)"       # its step response
+yt = giac"((-(((1)/(10)*sin((2*t))*(exp(1))^((-(t))))))+(-(((1)/(5)*cos((2*t))*(exp(1))^((-(t))))))+(1)/(5))"       # its step response
 (string(Hs), string(yt))
 
 #%% md id=mdmath_prose
@@ -59,10 +59,8 @@ and the cell still runs natively (`@giac_str`). Ctrl/Cmd-M inserts one.
 """
 
 #%% code id=celled_boot hidecode nocache
-# Bridge handlers (giac source ↔ LaTeX / MathJSON), then register the editor extension.
-slate_on("giac_tex", a -> Dict("latex" => GiacSlate.giac_src_to_tex(String(a.src))))
-slate_on("giac_src", a -> Dict("src"   => GiacSlate.mathjson_to_giac_src(String(a.mj))))
-GiacSlate.inline_math_boot()
+# One-liner: registers the giac↔LaTeX bridge handlers + the editor extension.
+GiacSlate.inline_math_boot(slate_on)
 
 #%% code id=celled_demo
 @bind num Slider(1:5)

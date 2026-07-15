@@ -59,3 +59,18 @@ Base.show(io::IO, ::MIME"text/html", ::InlineMathBoot) = print(io, "<script>", _
 
 "One-time registration of the inline-math editor extension; see the module docs for the boot cell."
 inline_math_boot() = InlineMathBoot()
+
+"""
+    inline_math_boot(slate_on)
+
+One-line setup for a notebook cell. Registers the giac↔LaTeX bridge handlers through the
+notebook's injected `slate_on` (the package can't reach it directly), then returns the
+editor-extension registration to render. Use it in a (hidecode) cell as:
+
+    GiacSlate.inline_math_boot(slate_on)
+"""
+function inline_math_boot(slate_on)
+    slate_on("giac_tex", a -> Dict("latex" => giac_src_to_tex(String(a.src))))
+    slate_on("giac_src", a -> Dict("src"   => mathjson_to_giac_src(String(a.mj))))
+    return InlineMathBoot()
+end
