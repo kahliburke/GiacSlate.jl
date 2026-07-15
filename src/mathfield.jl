@@ -125,6 +125,8 @@ const _MATHFIELD_JS = raw"""
       mf.style.cssText = 'font-size:1.4rem;padding:6px 10px;min-width:260px;' +
         'border:1px solid #30363d;border-radius:8px;background:#0d1117;color:#e6edf3';
       el.appendChild(mf); el._mf = mf;
+      // Restore the prior value (MathJSON) on (re-)wire, so a bind rebuild doesn't blank it.
+      if (api.value) { try { mf.setValue(String(api.value), { format: 'math-json' }); } catch (e) {} }
       mf.addEventListener('input', () => {
         let mj = mf.getValue('math-json');
         if (typeof mj !== 'string') mj = JSON.stringify(mj);
@@ -133,6 +135,7 @@ const _MATHFIELD_JS = raw"""
       });
     },
     sync() {},                                              // authored in the field; ignore server echoes
+    destroy(el) { if (el._mf) { try { el._mf.remove(); } catch (e) {} el._mf = null; } },
   });
 })();
 """

@@ -24,93 +24,6 @@ using Markdown
 tex(e) = strip(sprint(show, MIME("text/latex"), e), ['$', '\n', ' '])
 "ready — Giac, GiacSlate, commands loaded; variables x, y, s, a"
 
-#%% code id=boot hidecode
-GiacSlate.mathfield_boot()
-
-#%% md id=calc_md
-@md"""
-## GIAC calculator — expression × operation
-
-MathLive is a *math-notation* editor, not a code editor: typing a command like
-`factor(...)` gets tokenized as multiplication (`f·a·c·t·o·r`). So instead: type
-the **expression** in the field (use the palette for fractions, powers, ∫), pick a
-**GIAC operation**, and it runs live.
-"""
-
-#%% code id=calc_input
-@bind calc_mj custom_widget("mathfield"; label = "calc")
-
-#%% code id=calc_op
-@bind op Select(["eval" => "evaluate", "factor" => "factor", "expand" => "expand",
-                 "simplify" => "simplify", "diff" => "d/dx", "integrate" => "∫ dx",
-                 "partfrac" => "partial fractions"]; label = "operation")
-
-#%% code id=calc_out
-operand = GiacSlate.mathfield_to_giac(calc_mj)
-out = if operand === missing
-    Markdown.parse("*type an expression above*")
-else
-    r = try
-        o = string(op)
-        if o == "eval";        Giac.Commands.simplify(operand)
-        elseif o == "diff";      Giac.invoke_cmd(:diff, operand, x)
-        elseif o == "integrate"; Giac.invoke_cmd(:integrate, operand, x)
-        else                     Giac.invoke_cmd(Symbol(o), operand)
-        end
-    catch e
-        sprint(showerror, e)
-    end
-    Markdown.parse("\$\$$(op.label)\\left($(tex(operand))\\right) = $(r isa AbstractString ? r : tex(r))\$\$")
-end
-
-#%% md id=cmd_md
-@md"""
-## Type GIAC commands directly
-
-Commands are *code*, not notation — so give them a code input, not the math
-editor. Type any GIAC command and press **Enter**; `giac_eval` executes it and the
-result is typeset. Try `factor(x^4-1)`, `diff(x*sin(x),x)`, `integrate(1/x,x)`,
-`limit(sin(x)/x,x,0)`, `solve(x^2-5*x+6,x)`, `series(exp(x),x=0,5)`.
-"""
-
-#%% code id=cmd_boot hidecode
-# Register a "giaccmd" widget: a monospace command line that pushes its value on Enter.
-# (Inline registration, exactly how a plugin package would ship it.)
-WebPage(js = raw"""
-  window.slateRegisterWidget('giaccmd', {
-    wire(el, api) {
-      if (el._inp) return;
-      const inp = document.createElement('input');
-      inp.type = 'text';
-      inp.placeholder = (api.params && api.params.placeholder) || 'GIAC command — Enter to run';
-      inp.spellcheck = false; inp.autocapitalize = 'off'; inp.autocomplete = 'off';
-      inp.style.cssText = 'font-family:ui-monospace,SFMono-Regular,Menlo,monospace;' +
-        'font-size:1rem;padding:7px 11px;min-width:340px;border:1px solid #30363d;' +
-        'border-radius:8px;background:#0d1117;color:#e6edf3;outline:none';
-      inp.addEventListener('focus', () => inp.style.borderColor = '#58a6ff');
-      inp.addEventListener('blur',  () => inp.style.borderColor = '#30363d');
-      el.appendChild(inp); el._inp = inp;
-      inp.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); api.push(inp.value); }
-      });
-    },
-    sync(el, v) { if (el._inp && document.activeElement !== el._inp) el._inp.value = (v == null ? '' : String(v)); }
-  });
-""")
-
-#%% code id=cmd_input
-@bind cmd custom_widget("giaccmd"; label = "giac>", placeholder = "factor(x^4-1)")
-
-#%% code id=cmd_out
-cmd_result = if isempty(strip(cmd))
-    Markdown.parse("*type a command and press Enter*")
-else
-    r = try tex(Giac.giac_eval(String(cmd))) catch e; nothing end
-    r === nothing ?
-        Markdown.parse("⚠️ `$cmd` — not a valid GIAC command") :
-        Markdown.parse("\$\$\\texttt{$(replace(cmd, "\\" => "\\backslash "))} \\;\\Rightarrow\\; $r\$\$")
-end
-
 #%% md id=mdmath_hdr
 @md"""
 ## Giac math variables inside markdown
@@ -159,7 +72,7 @@ GiacSlate.inline_math_boot()
 H = giac"(x+19)"
 ex = expand(1 / H^num)
 ex2 = expand((x+num)^3)
-ex3=giac"((1)/((x+39)))^(3)"
+ex3=giac"11"
 expand(giac"((x+6))^(5)")
 
 #%% md id=aaa081

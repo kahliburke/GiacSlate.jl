@@ -23,6 +23,27 @@
     if (ce.ComputeEngine) ml.MathfieldElement.computeEngine = new ce.ComputeEngine();
   }
 
+  // Add a "matrices / templates" tab to the virtual keyboard (a GLOBAL palette setting, so
+  // it shows for every math field). Templates insert with #? placeholders you tab through;
+  // the row/column keys use MathLive's matrix-editing commands (they act inside a matrix).
+  try {
+    window.mathVirtualKeyboard.layouts = ['numeric', 'symbols', 'alphabetic', 'greek', {
+      label: '⎡ ⎤',
+      tooltip: 'matrices & templates',
+      rows: [[
+        { label: '[2×2]', latex: '\\begin{pmatrix}#?&#?\\\\#?&#?\\end{pmatrix}', width: 2 },
+        { label: '[3×3]', latex: '\\begin{pmatrix}#?&#?&#?\\\\#?&#?&#?\\\\#?&#?&#?\\end{pmatrix}', width: 2 },
+        { label: 'col', latex: '\\begin{pmatrix}#?\\\\#?\\end{pmatrix}', width: 1.5 },
+        { label: 'cases', latex: '\\begin{cases}#? & #?\\\\#? & #?\\end{cases}', width: 2 },
+      ], [
+        { label: '+row', command: 'addRowAfter', width: 1.5 },
+        { label: '+col', command: 'addColumnAfter', width: 1.5 },
+        { label: '−row', command: 'removeRow', width: 1.5 },
+        { label: '−col', command: 'removeColumn', width: 1.5 },
+      ]],
+    }];
+  } catch (e) {}
+
   // Palette policy: `_giacKbdWanted` is the SESSION PREFERENCE (do you want the palette
   // while editing math) — set only by your explicit toggle clicks. `setKbd` shows/hides it
   // programmatically WITHOUT touching that preference (guarded by `_giacProg`), so
@@ -50,10 +71,12 @@
       .giacchip { display:inline-block; vertical-align:middle; margin:0 1px; padding:0 4px;
         border:1px solid var(--border,#33373f); border-radius:6px;
         background:color-mix(in srgb, var(--accent,#6cb6ff) 8%, transparent); }
-      .giacchip:focus-within { border-color:var(--accent,#6cb6ff);
-        box-shadow:0 0 0 2px color-mix(in srgb, var(--accent,#6cb6ff) 28%, transparent); }
+      /* single clean focus ring on the chip; MathLive's own inner outline is suppressed
+         below so the two don't nest/overlap */
+      .giacchip:focus-within { border-color:transparent;
+        box-shadow:0 0 0 2px color-mix(in srgb, var(--accent,#6cb6ff) 55%, transparent); }
       .giacchip math-field { font-size:1em; color:var(--text,#d7dae1); background:transparent;
-        border:none; min-width:22px;
+        border:none; outline:none; min-width:22px;
         --caret-color:var(--accent,#6cb6ff); --primary-color:var(--accent,#6cb6ff);
         --text-color:var(--text,#d7dae1); --selection-color:var(--text,#d7dae1);
         --selection-background-color:color-mix(in srgb, var(--accent,#6cb6ff) 32%, transparent);
@@ -61,7 +84,8 @@
         --placeholder-color:color-mix(in srgb, var(--text,#d7dae1) 45%, transparent); }
       .giacchip math-field::part(menu-toggle),
       .giacchip math-field::part(virtual-keyboard-toggle) { display:none; }
-      /* the ⌨ palette toggle appears only while this field is being edited */
+      /* only the ⌨ palette toggle appears (while editing); the ≡ menu stays off the
+         field — it's on right-click / long-press. */
       .giacchip math-field:focus-within::part(virtual-keyboard-toggle) { display:flex; }`;
   }
 
