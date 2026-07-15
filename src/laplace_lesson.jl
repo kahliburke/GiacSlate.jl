@@ -23,7 +23,7 @@ register!(Section(:transforms, "Section 1 · Meeting the transform",
         Exercise(:lap_sin, "1.2 · Transform of a sine",
             raw"Write $\sin(\omega t)=\tfrac{1}{2i}(e^{i\omega t}-e^{-i\omega t})$ and transform each " *
             raw"exponential, or recall the standard pair. The denominator is $s^2+\omega^2$.",
-            ans -> expect_symbolic(raw"$\mathcal{L}\{\sin\omega t\}$", ans, _ref("w/(s^2+w^2)"))),
+            ans -> expect_symbolic(raw"$\mathcal{L}\{\sin\omega t\}$", ans, _ref("omega/(s^2+omega^2)"))),
 
         Exercise(:inv_lap, "1.3 · An inverse transform",
             raw"Which time signal has transform $\dfrac{s}{s^2+\omega^2}$? Differentiate your Section-1.2 " *

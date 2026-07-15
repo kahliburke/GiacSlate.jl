@@ -114,7 +114,7 @@ Give the Laplace transform of $\sin(\omega t)$ as an expression in `s` and `w`
 """
 
 #%% code id=ex1_2
-# Click the empty math field and type L{sin(w t)}, as an expression in s and w:
+# Click the empty math field and type L{sin(ω t)}, as an expression in s and ω:
 L_sin = giac""
 
 #%% code id=check1_2

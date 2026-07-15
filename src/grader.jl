@@ -87,6 +87,23 @@ argstr(args) = join((preview(a) for a in args), ", ")
 _as_giac(x::GiacExpr) = x
 _as_giac(x) = Giac.giac_eval(string(x))
 
+# Two encodings of the SAME symbol a reader may enter: the math field emits the
+# unicode `ω`, while `\omega` / typed-out `omega` parse to the ASCII identifier
+# `omega`. Fold the unicode glyph onto the ASCII spelling so both read as one
+# variable — this unifies encodings, it does NOT alias distinct letters together.
+const _SYMBOL_ALIASES = ("ω" => "omega",)
+
+function _canon(e)
+    for (from, to) in _SYMBOL_ALIASES
+        e = try
+            Giac.giac_eval("subst($(string(e)), $from=$to)")
+        catch
+            e   # if the substitution can't be expressed, compare as-is
+        end
+    end
+    e
+end
+
 # Does the Giac expression reduce to exactly zero?
 function giac_iszero(e)
     for f in (simplify, normal)
@@ -146,7 +163,7 @@ function expect_symbolic(label, student, reference; hint = "", reveal = false)
     student === missing && return Check[fail("$label: not answered yet",
         isempty(hint) ? "type your answer into the math field above" : hint)]
     diff = try
-        _as_giac(student) - _as_giac(reference)
+        _canon(_as_giac(student)) - _canon(_as_giac(reference))
     catch err
         return Check[fail("$label: couldn't read your expression", sprint(showerror, err))]
     end
