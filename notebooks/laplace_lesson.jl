@@ -4,7 +4,6 @@ try; import KaimonSlate; catch; error("This is a Kaimon Slate notebook — runni
 using Giac
 using Giac.Commands: laplace, ilaplace, simplify, factor, partfrac, solve
 using GiacSlate          # the lesson's autograder: check / grade / course_report
-using Markdown
 
 # Domains
 @giac_var t              # time
@@ -16,15 +15,14 @@ using Markdown
 @giac_var N0             # initial amount
 @giac_var m; @giac_var b; @giac_var k   # mass, damping, stiffness
 
-tex(e) = strip(sprint(show, MIME("text/latex"), e), ['$', '\n', ' '])
-
-# Stack "lhs = rhs" rows as native display-math blocks. Each row is written
-# `"lhs &= rhs"` (the `&` is dropped here) and rendered as its own `$$…$$` so it
-# typesets both live (MathJax) and in the PDF/Typst export.
-mathblock(rows) = Markdown.parse(
-    join(("\$\$" * replace(r, "&" => "") * "\$\$" for r in rows), "\n\n"))
-
+# Worked results and your answers are typeset by dropping GiacExpr values straight
+# into markdown with `{{ … }}` — no LaTeX plumbing needed.
 "Kernel ready — domains t, s; parameters a, w, N0, m, b, k; grader loaded."
+
+#%% code id=inline_boot hidecode nocache
+# Turn on the inline-math editor: every `giac"…"` literal below becomes a live,
+# click-to-edit math field (MathLive), with its LaTeX↔GIAC bridge wired through `slate_on`.
+GiacSlate.inline_math_boot(slate_on)
 
 #%% md id=title title
 @md"""
@@ -58,12 +56,15 @@ charge $q(t)$, the temperature $T(t)$.
 We'll build the idea up through three physical systems: exponential decay, a
 first-order RC circuit, and the damped harmonic oscillator.
 
-> **How the exercises work.** Each exercise has a cell with `missing` in it.
-> Replace `missing` with your answer — a symbolic expression (using the variables
-> `s`, `t`, `a`, `w`, …) or a small function — and the **check cell just below it
-> re-runs automatically** and grades you. Symbolic answers are checked by the
-> Giac algebra system, so *any* algebraically-equivalent form counts. Green ✓ means
-> you've got it. A running score sits at the very bottom.
+> **How the exercises work.** Most answers are typed straight into a **live math
+> field** — the little boxed `giac"…"` expression in each exercise cell. Click it
+> and type your answer in ordinary math notation (fractions, powers, `sin`, …), or
+> pop up the on-screen keyboard with the ⌨ button. Press <kbd>Enter</kbd> or
+> <kbd>Tab</kbd> to commit; the **check cell just below re-runs automatically** and
+> grades you. Symbolic answers go through the Giac algebra system, so *any*
+> algebraically-equivalent form counts — green ✓ means you've got it. A blank field
+> just reads as "not answered yet". A few exercises ask for a small Julia function
+> instead (you'll see `missing` to replace). A running score sits at the very bottom.
 """
 
 #%% md id=s1_md
@@ -75,14 +76,21 @@ the machine turning. Giac evaluates the integral $\int_0^\infty f(t)e^{-st}dt$
 for us — but the point is the *pattern*, so keep the definition in mind.
 """
 
-#%% code id=s1_worked
-# Two transforms computed live, straight from f(t):
-L1  = tex(laplace(Giac.giac_eval("1"), t, s))
-Lt  = tex(laplace(t, t, s))
-Lt2 = tex(laplace(t^2, t, s))
-Markdown.parse("""
-\$\$\\mathcal{L}\\{1\\} = $L1 \\qquad \\mathcal{L}\\{t\\} = $Lt \\qquad \\mathcal{L}\\{t^{2}\\} = $Lt2\$\$
-""")
+#%% code id=s1_worked hidecode
+# Three transforms, straight from the definition, computed live by Giac.
+# (The inputs are editable math fields — try changing t^2 to t^3.)
+L_one = laplace(giac"1",   t, s)
+L_lin = laplace(giac"t",   t, s)
+L_sq  = laplace(giac"t^2", t, s)
+(L_one, L_lin, L_sq)
+
+#%% md id=s1_worked_md
+@md"""
+$$\mathcal{L}\{1\} = {{ L_one }} \qquad \mathcal{L}\{t\} = {{ L_lin }}
+\qquad \mathcal{L}\{t^{2}\} = {{ L_sq }}$$
+
+Notice the pattern: each power of $t$ climbs one power of $\tfrac{1}{s}$.
+"""
 
 #%% md id=ex1_1_md
 @md"""
@@ -92,8 +100,8 @@ physics. Give its Laplace transform as an expression in `s` and `a`.
 """
 
 #%% code id=ex1_1
-# Replace `missing` with L{e^{-a t}} as an expression in s and a:
-L_exp = laplace(exp(-a*t), t, s)
+# Click the empty math field and type L{e^{-a t}}, as an expression in s and a:
+L_exp = giac""
 
 #%% code id=check1_1
 check(:lap_exp, L_exp)
@@ -106,8 +114,8 @@ Give the Laplace transform of $\sin(\omega t)$ as an expression in `s` and `w`
 """
 
 #%% code id=ex1_2
-# Replace `missing` with L{sin(w t)} as an expression in s and w:
-L_sin = missing
+# Click the empty math field and type L{sin(w t)}, as an expression in s and w:
+L_sin = giac""
 
 #%% code id=check1_2
 check(:lap_sin, L_sin)
@@ -120,8 +128,8 @@ Give $f(t)$ as an expression in `t` and `w`.
 """
 
 #%% code id=ex1_3
-# Replace `missing` with the inverse transform f(t), in terms of t and w:
-f_cos = missing
+# Type the time signal f(t) whose transform is s/(s²+w²), in terms of t and w:
+f_cos = giac""
 
 #%% code id=check1_3
 check(:inv_lap, f_cos)
@@ -144,15 +152,23 @@ $$sY(s) - y_0 = -a\,Y(s).$$
 Watch Giac solve it by the Laplace method:
 """
 
-#%% code id=s2_worked
-# Solve  T' = -½T,  T(0)=100  via Laplace, step by step.
-Ts   = Giac.giac_eval("100/(s + 1/2)")        # T(s), from sT(s) - 100 = -½T(s)
-Tt   = ilaplace(Ts, s, t)                       # back to the time domain
-mathblock([
-    "sT(s) - 100 &= -\\tfrac{1}{2}T(s)",
-    "T(s) &= " * tex(Ts),
-    "T(t) = \\mathcal{L}^{-1}\\{T(s)\\} &= " * tex(Tt),
-])
+#%% code id=s2_worked hidecode
+# Solve  T' = -½T,  T(0)=100  via Laplace. From sT(s) - 100 = -½T(s):
+Ts = giac"100/(s + 1/2)"        # T(s)  (edit this field to change the problem)
+Tt = ilaplace(Ts, s, t)          # back to the time domain
+(Ts, Tt)
+
+#%% md id=s2_worked_md
+@md"""
+$$sT(s) - 100 = -\tfrac{1}{2}T(s)$$
+
+$$T(s) = {{ Ts }}$$
+
+$$T(t) = \mathcal{L}^{-1}\{T(s)\} = {{ Tt }}$$
+
+The algebra happened in the $s$-domain; the last step carried us back to a
+cooling curve in time.
+"""
 
 #%% md id=ex2_1_md
 @md"""
@@ -162,8 +178,8 @@ that for $N(s)$ (an expression in `s`, `a`, and `N0`).
 """
 
 #%% code id=ex2_1
-# Solve sN(s) - N0 = -a N(s) for N(s), in terms of s, a, N0:
-N_s = missing
+# Solve sN(s) - N0 = -a N(s) for N(s). Type it in the field, in terms of s, a, N0:
+N_s = giac""
 
 #%% code id=check2_1
 check(:decay_transform, N_s)
@@ -176,8 +192,8 @@ $N(t)$ as an expression in `t`, `a`, `N0`.
 """
 
 #%% code id=ex2_2
-# Invert N(s) = N0/(s+a) to N(t), in terms of t, a, N0:
-N_t = missing
+# Invert N(s) = N0/(s+a) to N(t). Type it in the field, in terms of t, a, N0:
+N_t = giac""
 
 #%% code id=check2_2
 check(:decay_solution, N_t)
@@ -244,8 +260,8 @@ transfer function $H(s)=X(s)/F(s)$ as an expression in `s`, `m`, `b`, `k`.
 """
 
 #%% code id=ex3_1
-# Transfer function H(s) = X(s)/F(s), in terms of s, m, b, k:
-H = missing
+# Transfer function H(s) = X(s)/F(s). Type it in the field, in terms of s, m, b, k:
+H = giac""
 
 #%% code id=check3_1
 check(:transfer_fn, H)
@@ -314,33 +330,6 @@ course_report(;
     damping_ratio   = zeta,
     classify        = classify,
 )
-
-#%% md id=mf_md
-@md"""
-## 🧪 Experimental — type your answer with a math keyboard
-
-Instead of writing Julia, type the Laplace transform of $e^{-at}$ as **real
-notation** in the field below (use the on-screen keyboard or type `1/(s+a)`).
-The math field emits MathJSON, `GiacSlate.mathfield_to_giac` turns it into a
-`GiacExpr`, and the same autograder checks it.
-"""
-
-#%% code id=mf_target
-# A first-class math-keyboard bind — the `mathfield` widget kind, registered above.
-@bind ans_mj custom_widget("mathfield"; label = "your answer")
-
-#%% code id=mf_widget hidecode
-# Register the `mathfield` widget with Slate (imports MathLive + Compute Engine).
-# This is a plugin: it uses the `slateRegisterWidget` extension point — no core Slate
-# changes per widget.
-GiacSlate.mathfield_boot()
-
-#%% code id=mf_expr
-# Parse the math-field's MathJSON into a Giac expression (reactive on ans_mj).
-mf_answer = GiacSlate.mathfield_to_giac(ans_mj)
-
-#%% code id=mf_check
-check(:lap_exp, mf_answer)
 
 # ╔═╡ Slate.env · notebook packages (auto-maintained — manage via the package panel)
 #   Giac 0.14.1 e4421f97-9838-4fd0-9fa5-94f11373bf78

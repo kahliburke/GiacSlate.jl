@@ -16,9 +16,13 @@
 
 Parse and evaluate GIAC source into a `GiacExpr`, e.g. `giac"1/(s+a)"`, `giac"diff(sin(x),x)"`.
 The inline-math editor renders such a literal as a live, editable math field.
+
+An **empty** literal (`giac""`, the state of a blank math field) evaluates to `missing`
+rather than throwing — so a blank field reads cleanly as "not filled in yet" (e.g. an
+unanswered exercise flows through an autograder as `missing`) instead of breaking the cell.
 """
 macro giac_str(s)
-    :($(Giac.giac_eval)($s))
+    isempty(strip(s)) ? :(missing) : :($(Giac.giac_eval)($s))
 end
 
 # GiacExpr → inner LaTeX (no surrounding $).

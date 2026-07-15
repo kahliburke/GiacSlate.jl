@@ -144,7 +144,7 @@ of the exercise) — set `reveal = true` to show it.
 """
 function expect_symbolic(label, student, reference; hint = "", reveal = false)
     student === missing && return Check[fail("$label: not answered yet",
-        isempty(hint) ? "replace `missing` with your expression" : hint)]
+        isempty(hint) ? "type your answer into the math field above" : hint)]
     diff = try
         _as_giac(student) - _as_giac(reference)
     catch err
