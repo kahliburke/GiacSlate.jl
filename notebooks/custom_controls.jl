@@ -58,26 +58,22 @@ reload, any `giac"…"` literal in a **real code cell** renders as a live math f
 and the cell still runs natively (`@giac_str`). Ctrl/Cmd-M inserts one.
 """
 
-#%% code id=celled_boot hidecode nocache
-# One-liner: registers the giac↔LaTeX bridge handlers + the editor extension.
-GiacSlate.inline_math_boot(slate_on)
-
 #%% code id=celled_demo
 @bind num Slider(1:5)
 
-#%% code id=a8e696
+#%% code id=8cdeba
+Giac.det(giac"matrix([[x,y,4],[5,6,x],[4,6,1]])")
+
+#%% code id=a8e696 controls=num
 # After reload, the giac"…" below renders as a live math field — and this cell runs.
 H = giac"(x+19)"
 ex = expand(1 / H^num)
 ex2 = expand((x+num)^3)
-ex3=giac"(5+111)" + factor(giac"((x)^(4)+-1)") - Giac.det(giac"matrix([[1,2,4],[5,6,1],[4,6,1]])")
+ex3=giac"(5+111)" + factor(giac"((x)^(4)+-1)") - Giac.det(giac"matrix([[x,y,4],[5,6,1],[4,6,1]])")
 
 expand(giac"((x+6))^(5)")
 
 @show ex3
-
-#%% code id=19094f
-search_commands_by_description("matrix", n=10)
 
 #%% md id=aaa081
 @md"""
@@ -92,3 +88,7 @@ ex3:
 1. Bullet
 2. Math ${{ ex3 }}$
 """
+
+# ╔═╡ Slate.config · per-notebook settings (Settings panel)
+#   docid = 69d15677-0ab2-48d2-b596-732963251098
+# ╚═╡

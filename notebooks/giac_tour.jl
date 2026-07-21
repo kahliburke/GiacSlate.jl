@@ -15,11 +15,6 @@ using Giac.Commands: expand, factor, simplify, normal, partfrac, collect,
 
 "ready — Giac (Xcas engine) + inline-math controls loaded; symbols x y z t s a b k n"
 
-#%% code id=boot hidecode nocache
-# Every giac"…" literal below is a live, click-to-edit math field. Edit the
-# input and the cell re-runs — the whole tour is a playground.
-GiacSlate.inline_math_boot(slate_on)
-
 #%% md id=title title
 @md"""
 # A Tour of GIAC
@@ -235,3 +230,7 @@ giac"ifactor(360)"
 
 #%% code id=dragon_ifactors
 giac"ifactors(360)"
+
+# ╔═╡ Slate.config · per-notebook settings (Settings panel)
+#   docid = 257208ab-803b-4121-9955-11d5b95e475d
+# ╚═╡

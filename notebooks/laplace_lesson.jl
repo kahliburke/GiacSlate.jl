@@ -1,6 +1,6 @@
 try; import KaimonSlate; catch; error("This is a Kaimon Slate notebook — running it as plain Julia needs the KaimonSlate runtime in this environment. Add it with `import Pkg; Pkg.add(\"KaimonSlate\")`, or open it in Kaimon Slate."); end; KaimonSlate.standalone!(@__MODULE__; dir=@__DIR__)
 
-#%% code id=setup hidecode
+#%% code id=setup
 using Giac
 using Giac.Commands: laplace, ilaplace, simplify, factor, partfrac, solve
 using GiacSlate          # the lesson's autograder: check / grade / course_report
@@ -18,11 +18,6 @@ using GiacSlate          # the lesson's autograder: check / grade / course_repor
 # Worked results and your answers are typeset by dropping GiacExpr values straight
 # into markdown with `{{ … }}` — no LaTeX plumbing needed.
 "Kernel ready — domains t, s; parameters a, w, N0, m, b, k; grader loaded."
-
-#%% code id=inline_boot hidecode nocache
-# Turn on the inline-math editor: every `giac"…"` literal below becomes a live,
-# click-to-edit math field (MathLive), with its LaTeX↔GIAC bridge wired through `slate_on`.
-GiacSlate.inline_math_boot(slate_on)
 
 #%% md id=title title
 @md"""
@@ -333,4 +328,7 @@ course_report(;
 
 # ╔═╡ Slate.env · notebook packages (auto-maintained — manage via the package panel)
 #   Giac 0.14.1 e4421f97-9838-4fd0-9fa5-94f11373bf78
+# ╚═╡
+# ╔═╡ Slate.config · per-notebook settings (Settings panel)
+#   docid = ced90ada-f763-431e-a80e-cffb40bb4861
 # ╚═╡

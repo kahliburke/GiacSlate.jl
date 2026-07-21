@@ -87,21 +87,16 @@ argstr(args) = join((preview(a) for a in args), ", ")
 _as_giac(x::GiacExpr) = x
 _as_giac(x) = Giac.giac_eval(string(x))
 
-# Two encodings of the SAME symbol a reader may enter: the math field emits the
-# unicode `ω`, while `\omega` / typed-out `omega` parse to the ASCII identifier
-# `omega`. Fold the unicode glyph onto the ASCII spelling so both read as one
-# variable — this unifies encodings, it does NOT alias distinct letters together.
-const _SYMBOL_ALIASES = ("ω" => "omega",)
-
+# A reader may enter a symbol in an extended encoding GIAC treats as distinct from its ASCII form
+# (a unicode Greek glyph `ω`/`θ`, a subscript `x₀`). Canonicalise the answer to ASCII so it
+# compares equal to a reference written the ASCII way — this unifies encodings of one symbol, it
+# does NOT alias distinct symbols together. `_canon_src` (mathfield.jl) is the same normalisation
+# the MathJSON→source bridge applies at input; this is the safety net for anything that reaches
+# the grader another way (e.g. a literal `giac"ω"`).
 function _canon(e)
-    for (from, to) in _SYMBOL_ALIASES
-        e = try
-            Giac.giac_eval("subst($(string(e)), $from=$to)")
-        catch
-            e   # if the substitution can't be expressed, compare as-is
-        end
-    end
-    e
+    s = string(e)
+    folded = _canon_src(s)
+    folded == s ? e : _as_giac(folded)
 end
 
 # Does the Giac expression reduce to exactly zero?

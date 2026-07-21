@@ -20,9 +20,14 @@ The inline-math editor renders such a literal as a live, editable math field.
 An **empty** literal (`giac""`, the state of a blank math field) evaluates to `missing`
 rather than throwing — so a blank field reads cleanly as "not filled in yet" (e.g. an
 unanswered exercise flows through an autograder as `missing`) instead of breaking the cell.
+
+Extended characters typed straight into the literal (a Greek glyph `ω`, a subscript `x₀`) are
+canonicalised to GIAC's ASCII source (`_canon_src`) at macro-expansion, so a directly-typed
+`giac"ω"` is the same symbol as a keyboard-entered ω — see the canonicalisation note in
+`mathfield.jl`.
 """
 macro giac_str(s)
-    isempty(strip(s)) ? :(missing) : :($(Giac.giac_eval)($s))
+    isempty(strip(s)) ? :(missing) : :($(Giac.giac_eval)($(_canon_src(s))))
 end
 
 # GiacExpr → inner LaTeX (no surrounding $).
@@ -43,7 +48,7 @@ gdisplay(e) = "\$\$" * _giac_tex(e) * "\$\$"
 # `undef` for malformed input instead of throwing — so treat that as an error too.
 function giac_src_to_tex(src::AbstractString)
     isempty(strip(src)) && return ""
-    g = Giac.giac_eval(String(src))
+    g = Giac.giac_eval(_canon_src(String(src)))    # canonicalise so a typed ω displays as \omega
     strip(string(g)) == "undef" && error("not a valid GIAC expression")
     _giac_tex(g)
 end
@@ -57,29 +62,22 @@ function mathjson_to_giac_src(json::AbstractString)
     String(strip(_giac_src(x)))
 end
 
-# ── Front-end registration for the inline-math EDITOR extension ──────────────
-# `inline_math_boot()` renders as a <script> that registers assets/inline_math_editor.js
-# with Slate's editor-extension registry, so `giac"…"` renders live in every code cell.
-# Pair it in a (hidecode) boot cell with the two bridge handlers the extension calls:
-#   slate_on("giac_tex", a -> Dict("latex" => giac_src_to_tex(String(a.src))))
-#   slate_on("giac_src", a -> Dict("src"   => mathjson_to_giac_src(String(a.mj))))
-struct InlineMathBoot end
-_inline_math_js() = read(joinpath(@__DIR__, "..", "assets", "inline_math_editor.js"), String)
-Base.show(io::IO, ::MIME"text/html", ::InlineMathBoot) = print(io, "<script>", _inline_math_js(), "</script>")
-
-"One-time registration of the inline-math editor extension; see the module docs for the boot cell."
-inline_math_boot() = InlineMathBoot()
-
-"""
-    inline_math_boot(slate_on)
-
-One-line setup for a notebook cell. Registers the giac↔LaTeX bridge handlers through the
-notebook's injected `slate_on` (the package can't reach it directly), then returns the
-editor-extension registration to render. Use it in a (hidecode) cell as:
-
-    GiacSlate.inline_math_boot(slate_on)
-"""
-function inline_math_boot(slate_on)
+# ── The inline-math PACKAGE-GLOBAL front-end (editor extension + giac bridge) ─────────────────
+# The inline-math editor renders `giac"…"` literals as live MathLive fields in every code cell — it
+# isn't tied to any `@bind`, so it rides SlateExtensionsBase's package-global hook rather than a boot
+# cell. Slate calls `__slate_frontend(slate_on)` once per drain for every loaded module that defines it
+# (see `ensure_module_frontends!`), so `using GiacSlate` alone wires the whole thing up:
+#   • `assets/inline_math_editor.js` self-registers via `window.slateRegisterEditorExtension`, delivered
+#     through the extension manifest (process-global, deduped by id);
+#   • the two JS→Julia bridge handlers — `giac_tex` (giac source → LaTeX, the display side) and
+#     `giac_src` (MathLive MathJSON → giac source, the write-back side) — register into THIS notebook's
+#     handler table via the injected `slate_on`.
+# Slate fires this once per namespace generation (not every drain — it guards the work), and re-fires
+# after a namespace rebuild to re-install the handlers into the fresh handler table.
+function __slate_frontend(slate_on)
+    # The inline-math editor extension — a classic script that self-registers via
+    # `window.slateRegisterEditorExtension`; `@pkg_asset` reads it from the package's `assets/` dir.
+    provide_frontend!(@pkg_asset("assets/inline_math_editor.js"); id = "GiacSlate.inline_math_editor")
     slate_on("giac_tex", a -> begin
         try
             Dict("latex" => giac_src_to_tex(String(a.src)), "ok" => true)
@@ -94,5 +92,5 @@ function inline_math_boot(slate_on)
             Dict("src" => "", "error" => sprint(showerror, e))
         end
     end)
-    return InlineMathBoot()
+    return nothing
 end

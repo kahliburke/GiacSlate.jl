@@ -1,3 +1,5 @@
+try; import KaimonSlate; catch; error("This is a Kaimon Slate notebook — running it as plain Julia needs the KaimonSlate runtime in this environment. Add it with `import Pkg; Pkg.add(\"KaimonSlate\")`, or open it in Kaimon Slate."); end; KaimonSlate.standalone!(@__MODULE__; dir=@__DIR__)
+
 #%% code id=setup hidecode
 using Giac
 using Giac.Commands: factor, expand, simplify, solve, integrate, diff, limit,
@@ -23,6 +25,7 @@ taylor_poly(expr, n) =
 "Giac ready — variables x, a, t, s; helpers tex / mathblock / taylor_poly loaded."
 
 #%% md id=title title
+@md"""
 # Symbolic Computation with Giac.jl
 
 ## A computer algebra system, live in a Slate notebook
@@ -31,12 +34,15 @@ Giac (the engine behind Xcas) gives us exact algebra, calculus, and linear
 algebra. Here we drive it from Julia through
 [`Giac.jl`](https://github.com/s-celles/Giac.jl) and let Slate render every
 result as typeset mathematics — no floating-point roundoff anywhere below.
+"""
 
 #%% md id=algebra_md
+@md"""
 ## 1. Algebra — exact, not approximate
 
 Factoring, expanding, simplifying, and partial-fraction decomposition all
 return closed forms, which Slate typesets directly.
+"""
 
 #%% code id=algebra_demo
 mathblock([
@@ -47,7 +53,9 @@ mathblock([
 ])
 
 #%% md id=solve_md
+@md"""
 Equation solving returns **exact** roots — rational, irrational, and complex.
+"""
 
 #%% code id=solve_demo
 # Exact roots, including irrational and complex ones
@@ -59,10 +67,12 @@ mathblock([
 ])
 
 #%% md id=calculus_md
+@md"""
 ## 2. Calculus — derivatives, integrals, limits
 
 The engine differentiates and integrates in closed form and evaluates limits,
 including improper ones.
+"""
 
 #%% code id=calculus_demo
 f = x * sin(x)
@@ -75,6 +85,7 @@ mathblock([
 ])
 
 #%% md id=taylor_md
+@md"""
 ## 3. Interactive: Taylor series, live
 
 Pick a function and a truncation order. Giac computes the Taylor polynomial about
@@ -82,6 +93,7 @@ $x = 0$ **symbolically**; we compile it to a Julia function with `build_function
 and plot it against the exact curve. Push the order up and watch the polynomial
 hug the true function — then notice how $\arctan x$ still diverges past its
 radius of convergence $|x| = 1$, no matter how many terms you add.
+"""
 
 #%% code id=taylor_explorer
 @bind fkey Select(["sin(x)" => "sin x", "cos(x)" => "cos x",
@@ -113,12 +125,14 @@ echart(series(:line, xs, ytru; name="f(x) = $(fkey.value)", smooth=true, symbol=
 mathblock(["f(x) = $(fkey.value) &\\approx " * tex(poly)])
 
 #%% md id=laplace_md
+@md"""
 ## 4. Laplace transforms
 
 Giac transforms between the time domain $t$ and the complex frequency domain
 $s$ exactly. `laplace` carries $f(t)$ to $F(s)$; `ilaplace` inverts it. This is
 the workhorse of linear-systems and control theory — and a round trip should
 return where it started.
+"""
 
 #%% code id=laplace_forward
 # Forward transforms:  f(t)  ⟶  F(s) = ∫₀^∞ f(t) e^{-st} dt
@@ -152,6 +166,7 @@ mathblock([
 ])
 
 #%% md id=system_md
+@md"""
 ## 5. A second-order system, end to end
 
 The canonical control-theory system
@@ -164,6 +179,7 @@ step response $y(t)$ — no numerical ODE solver. Drag the sliders: the closed
 form, the pole locations in the complex $s$-plane, and the time response all
 update together. Watch the poles split into a complex-conjugate pair as $\zeta$
 drops below $1$ and the response begins to ring.
+"""
 
 #%% code id=system_controls
 @bind ζ  Slider(0.1, 2.0, 0.3; step=0.05, label="damping ζ")
@@ -210,10 +226,12 @@ echart(:line, ts, ys; title="Step response y(t)  —  ζ = $ζ, ωₙ = $ωn",
        height=360)
 
 #%% md id=linalg_md
+@md"""
 ## 6. Symbolic linear algebra
 
 Matrices with symbolic entries carry through determinants, inverses, and
 eigenvalues as exact expressions in the parameter $a$.
+"""
 
 #%% code id=linalg_demo
 M   = GiacMatrix(Giac.giac_eval("[[a,1],[1,a]]"))
@@ -260,4 +278,7 @@ end
 
 # ╔═╡ Slate.env · notebook packages (auto-maintained — manage via the package panel)
 #   Giac 0.14.1 e4421f97-9838-4fd0-9fa5-94f11373bf78
+# ╚═╡
+# ╔═╡ Slate.config · per-notebook settings (Settings panel)
+#   docid = 79775588-7259-4986-bd79-49c25256ea0e
 # ╚═╡
