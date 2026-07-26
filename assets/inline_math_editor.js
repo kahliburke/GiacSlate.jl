@@ -282,6 +282,17 @@
     return true;
   };
 
+  // Expose the insert-field action so a HOST cell-toolbar button (registered from Julia via
+  // SlateExtensionsBase.register_cell_action! → window.slateRegisterCellAction) can trigger it on a
+  // given cell's editor — the clickable twin of Cmd-M. Focus the editor first so insertGiac acts at
+  // its live caret; a cell with no code editor (markdown / a pure @bind) is a safe no-op.
+  window.slateGiacInsert = cellId => {
+    const v = (window.editors || {})[cellId];
+    if (!v) return;
+    v.focus();
+    insertGiac(v);
+  };
+
   const km = keymap.of([
     { key: 'Mod-m', run: insertGiac },
     { key: 'Backspace', run: delGiac('end') },

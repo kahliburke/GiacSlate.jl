@@ -5,7 +5,7 @@ using Giac
 using GiacSlate
 using Giac.Commands: expand, factor, simplify, normal, partfrac, collect,
     diff, integrate, limit, series, taylor, solve, csolve, linsolve, desolve,
-    laplace, ilaplace, fourier, ifactor, isprime, nextprime, trigexpand,
+    laplace, ilaplace, fourier, ifactor, ifactors, isprime, nextprime, trigexpand,
     texpand, tlin, tcollect, eigenvalues, eigenvectors, charpoly, rref
 
 # Working symbols. Anything you type into a giac"…" field is full Xcas source,
@@ -114,15 +114,18 @@ polynomial — all exact.
 """
 
 #%% code id=la_inv
-giac"inv([[1, 2, 0], [0, 1, 3], [2, 0, 1]])"
+A = giac"inv([[1, 2, 0], [0, 1, 3], [2, 0, 1]])"
+
+#%% code id=d6a243
+M = giac"matrix([[2,1,0],[1,2,1],[0,1,2]])"
 
 #%% code id=la_eig
 # Eigenvalues of a symmetric matrix (exact, with multiplicity)
-eigenvalues(giac"[[2, 1, 0], [1, 2, 1], [0, 1, 2]]")
+eigenvalues(M)
 
 #%% code id=la_charpoly
 # Characteristic polynomial in λ (here written l)
-charpoly(giac"[[2, 1, 0], [1, 2, 1], [0, 1, 2]]", giac"l")
+charpoly(M)
 
 #%% md id=s_numth
 @md"""
@@ -144,6 +147,22 @@ giac"nextprime(10^18)"
 # Chinese remainder theorem: the x with x≡2 (mod 3), x≡3 (mod 5), x≡2 (mod 7).
 # Result [r, m] means x ≡ r (mod m).
 giac"chrem([2, 3, 2], [3, 5, 7])"
+
+#%% md id=nt_ifactor_md
+@md"""
+### Prime factorization: `ifactor` vs `ifactors`
+
+`ifactor` factors an integer and typesets the prime-power product directly;
+`ifactors` (with the s) instead returns the flat `[prime, exponent, …]` list —
+handier when you want to consume the factorization programmatically rather
+than just read it off the page.
+"""
+
+#%% code id=nt_ifactor
+ifactor(360)
+
+#%% code id=nt_ifactors
+ifactors(360)
 
 #%% md id=s_transforms
 @md"""
@@ -199,10 +218,6 @@ giac"exp(i*pi/3)"
 The engine is enormous and mostly delightful, but building this tour turned up
 real sharp edges — worth knowing before you trust a result:
 
-- **`ifactor` renders as the original number.** `ifactor(360)` *computes*
-  `2³·3²·5`, but its LaTeX prints `360` — the factorisation is lost in the math
-  field (see the cell below). Use **`ifactors(360)`** → `[2,3, 3,2, 5,1]` (prime,
-  exponent pairs), which survives typesetting.
 - **`desolve` is picky, and fails *silently*.** Passing conditions as a list,
   `desolve([ode, y(0)=1], y)`, returns an empty `[]` rather than erroring. Join
   them with `and`: `desolve(ode and y(0)=1 and y'(0)=0, y(t))`. And keep the whole
@@ -218,18 +233,7 @@ real sharp edges — worth knowing before you trust a result:
   until you declare `assume(y, complex)`.
 - **Series carry their remainder.** `taylor`/`series` results include an
   `order_size(x)` tail marking the truncation order.
-
-The field below *looks* unfactored — but the cell's value really is $2^3\cdot
-3^2\cdot 5$. That gap between what the field shows and what the value is, is the trap:
 """
-
-#%% code id=dragon_ifactor
-# Reads as "360" in the field, but the value is the factorisation. `ifactors`
-# (with the s) returns [prime, exponent, …] pairs that DO survive typesetting.
-giac"ifactor(360)"
-
-#%% code id=dragon_ifactors
-giac"ifactors(360)"
 
 # ╔═╡ Slate.config · per-notebook settings (Settings panel)
 #   docid = 257208ab-803b-4121-9955-11d5b95e475d

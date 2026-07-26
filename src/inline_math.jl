@@ -74,10 +74,25 @@ end
 #     handler table via the injected `slate_on`.
 # Slate fires this once per namespace generation (not every drain — it guards the work), and re-fires
 # after a namespace rebuild to re-install the handlers into the fresh handler table.
+# A per-cell toolbar button that drops a fresh inline math field into a code cell's editor — the
+# clickable twin of the editor's Cmd-M (`insertGiac`, exposed as `window.slateGiacInsert`). Authored
+# the blessed way, mirroring `to_widget(s) = auto_widget(s)`: a typed action whose fields ARE the wire
+# spec, reflected by `auto_cell_action` (id namespaced by `kind_for` ⇒ "GiacSlate.MathfieldButton").
+Base.@kwdef struct MathfieldButton
+    icon::String    = "∫"
+    title::String   = "insert a math field (⌘M)"
+    show::String    = "cell.kind === 'code'"          # code cells only — where giac\"…\" lives
+    onclick::String = "window.slateGiacInsert(cellId)"
+end
+SlateExtensionsBase.to_cell_action(a::MathfieldButton) = auto_cell_action(a)
+
 function __slate_frontend(slate_on)
     # The inline-math editor extension — a classic script that self-registers via
     # `window.slateRegisterEditorExtension`; `@pkg_asset` reads it from the package's `assets/` dir.
     provide_frontend!(@pkg_asset("assets/inline_math_editor.js"); id = "GiacSlate.inline_math_editor")
+    # …and its clickable counterpart in every code cell's header toolbar (host seam:
+    # `window.slateRegisterCellAction`). Deduped by the action's namespaced id.
+    register_cell_action!(MathfieldButton())
     slate_on("giac_tex", a -> begin
         try
             Dict("latex" => giac_src_to_tex(String(a.src)), "ok" => true)

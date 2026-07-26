@@ -1,13 +1,30 @@
-# Julia package: pin deps via Project.toml, not the resolved Manifest
-/Manifest.toml
-/docs/build/
+*
 
-# Local Claude/editor settings
-.claude/settings.local.json
+# Root files
+!/Project.toml
+!/README.md
+!/LICENSE
+!/.gitignore
 
-# Slate notebook data + scratch
-/data/
-**/.ipynb_checkpoints/
+# Directories
+!/src/
+!/notebooks/
+!/assets/
 
-# OS
-.DS_Store
+# src/
+!/src/GiacSlate.jl
+!/src/grader.jl
+!/src/inline_math.jl
+!/src/laplace_lesson.jl
+!/src/mathfield.jl
+
+# notebooks/
+!/notebooks/custom_controls.jl
+!/notebooks/giac_intro.jl
+!/notebooks/giac_tour.jl
+!/notebooks/laplace_lesson.jl
+
+# assets/
+!/assets/inline_math_editor.js
+!/assets/mathcode.js
+!/assets/mathfield.js

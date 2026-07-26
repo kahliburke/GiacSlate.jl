@@ -5,6 +5,7 @@ using Giac
 using Giac.Commands: factor, expand, simplify, solve, integrate, diff, limit,
                      partfrac, normal, laplace, ilaplace
 using Markdown
+using GiacSlate   # activates the inline-math editor + the per-cell "insert math field" (∫) toolbar button
 
 # Symbolic variables shared across the notebook
 @giac_var x
@@ -196,6 +197,8 @@ poles = [-ζ*ωn + ωn*sqrt(disc), -ζ*ωn - ωn*sqrt(disc)]
 regime = ζ < 1 ? "under-damped (ringing)" : ζ ≈ 1 ? "critically damped" : "over-damped"
 
 mathblock(["y(t) &= " * tex(Giac.Commands.simplify(ystep))])
+
+#%% code id=e838ad
 
 #%% code id=system_poles
 # Pole map in the complex s-plane. Poles in the left half-plane ⇒ stable;
