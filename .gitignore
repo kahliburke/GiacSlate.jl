@@ -25,6 +25,7 @@
 !/notebooks/laplace_lesson.jl
 
 # assets/
+!/assets/importmap.js
 !/assets/inline_math_editor.js
 !/assets/mathcode.js
 !/assets/mathfield.js

@@ -46,17 +46,14 @@
     document.head.appendChild(st);
   }
 
-  // All @codemirror/* pinned to one @codemirror/state so there's a single instance.
-  const S = 'https://esm.sh/@codemirror/state@6.5.2';
-  const dep = '?deps=@codemirror/state@6.5.2';
-  const [state, view, commands, language, legacy] = await Promise.all([
-    import(S),
-    import('https://esm.sh/@codemirror/view@6.36.5' + dep),
-    import('https://esm.sh/@codemirror/commands@6.7.1' + dep),
-    import('https://esm.sh/@codemirror/language@6.10.8' + dep),
-    import('https://esm.sh/@codemirror/legacy-modes@6.4.2/mode/julia' + dep),
-    import('https://esm.sh/mathlive@0.100.0'),          // defines <math-field>
-    import('https://esm.sh/@cortex-js/compute-engine@0.26.4'),
+  const [state, view, commands, language, legacy, ml, ce] = await Promise.all([
+    import('@codemirror/state'),
+    import('@codemirror/view'),
+    import('@codemirror/commands'),
+    import('@codemirror/language'),
+    import('@codemirror/legacy-modes/mode/julia'),
+    import('mathlive'),          // defines <math-field>
+    import('@cortex-js/compute-engine'),
   ]);
   const { EditorState, Compartment } = state;
   const { EditorView, Decoration, WidgetType, ViewPlugin, keymap, lineNumbers } = view;

@@ -14,11 +14,11 @@ import { html } from "@slate/widget";
 let _mathlive;
 const loadMathlive = () =>
   (_mathlive ??= Promise.all([
-    import("https://esm.sh/mathlive@0.100.0"),
-    import("https://esm.sh/@cortex-js/compute-engine@0.26.4"),
+    import("mathlive"),
+    import("@cortex-js/compute-engine"),
   ]).then(([ml, ce]) => {
     if (ml.MathfieldElement) {
-      ml.MathfieldElement.fontsDirectory  = "https://cdn.jsdelivr.net/npm/mathlive@0.100.0/dist/fonts";
+      ml.MathfieldElement.fontsDirectory  = "https://cdn.jsdelivr.net/npm/mathlive/dist/fonts";
       ml.MathfieldElement.soundsDirectory = null;
       if (ce.ComputeEngine) ml.MathfieldElement.computeEngine = new ce.ComputeEngine();
     }

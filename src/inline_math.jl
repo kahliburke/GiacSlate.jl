@@ -89,6 +89,7 @@ SlateExtensionsBase.to_cell_action(a::MathfieldButton) = auto_cell_action(a)
 function __slate_frontend(slate_on)
     # The inline-math editor extension — a classic script that self-registers via
     # `window.slateRegisterEditorExtension`; `@pkg_asset` reads it from the package's `assets/` dir.
+    provide_frontend!(@pkg_asset("assets/importmap.js"); id = "GiacSlate.importmap")
     provide_frontend!(@pkg_asset("assets/inline_math_editor.js"); id = "GiacSlate.inline_math_editor")
     # …and its clickable counterpart in every code cell's header toolbar (host seam:
     # `window.slateRegisterCellAction`). Deduped by the action's namespaced id.
