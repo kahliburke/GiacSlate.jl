@@ -8,13 +8,7 @@ Giac = "e4421f97-9838-4fd0-9fa5-94f11373bf78"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 SlateExtensionsBase = "bc31d39e-4442-48fa-b9ae-1bd99fed63f7"
 
-# The lean Slate extension SDK — GiacSlate builds its @bind control + front-end boot against this,
-# NOT against the heavy KaimonSlate server. Dev-sourced from the sibling checkout while SEB is
-# unregistered; swap for the registered version once it lands in the General registry.
-[sources]
-SlateExtensionsBase = {path = "../KaimonSlate/lib/SlateExtensionsBase"}
-
 [compat]
 Giac = "0.14.2"
 JSON = "1.6.1"
-SlateExtensionsBase = "0.1"
+SlateExtensionsBase = "0.9"
