@@ -1,0 +1,11 @@
+# Catalog listing for Slate's Extensions gallery. Every key is optional.
+
+tagline = "The Xcas computer-algebra engine, through live inline math fields"
+icon    = "∫"
+categories = ["math", "controls"]
+
+example = "notebooks/giac_tour.jl"
+
+# Hosted on this repo's `media` release rather than committed: screenshots are regenerated
+# whenever the demo notebook changes, and the catalog mirrors the URL into its own artifact.
+screenshots = ["https://github.com/kahliburke/GiacSlate.jl/releases/download/media/GiacSlate-notebook.png"]
