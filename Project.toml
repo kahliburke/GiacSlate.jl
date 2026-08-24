@@ -1,6 +1,6 @@
 name = "GiacSlate"
 uuid = "f4c9f34b-fa6a-4506-9309-e8c0bac809fa"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Kahli Burke <kahli@kahliburke.com>"]
 
 [deps]
