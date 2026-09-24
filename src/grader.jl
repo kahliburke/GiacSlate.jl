@@ -269,10 +269,21 @@ end
 Roll every registered section into one progress overview. Pass every answer you
 have by keyword; the card shows overall completion plus a bar per section.
 """
-function course_report(; kwargs...)
+course_report(; kwargs...) = course_report(SECTION_ORDER; kwargs...)
+
+"""
+    course_report(section_ids; key1 = answer1, ...) -> CourseReport
+
+The same overview restricted to the listed sections, in the order given — for a
+lesson that shares the section registry with other lessons.
+"""
+function course_report(section_ids::AbstractVector{Symbol}; kwargs...)
     provided = Dict(kwargs)
+    for sid in section_ids
+        haskey(SECTIONS, sid) || error("unknown section :$sid  (known: $(join(SECTION_ORDER, ", ")))")
+    end
     CourseReport([GradeReport(SECTIONS[sid], _results_for(SECTIONS[sid], provided), false)
-                  for sid in SECTION_ORDER])
+                  for sid in section_ids])
 end
 
 # ---- rendering ------------------------------------------------------------
