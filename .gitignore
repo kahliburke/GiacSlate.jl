@@ -11,13 +11,18 @@
 !/src/
 !/notebooks/
 !/assets/
+!/test/
 
 # src/
 !/src/GiacSlate.jl
+!/src/derivation.jl
 !/src/grader.jl
 !/src/inline_math.jl
 !/src/laplace_lesson.jl
 !/src/mathfield.jl
+
+# test/
+!/test/runtests.jl
 
 # notebooks/
 !/notebooks/custom_controls.jl

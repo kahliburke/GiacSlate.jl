@@ -12,6 +12,8 @@ include("laplace_lesson.jl")
 include("mathfield.jl")
 # giac"…" macro, gmath/gdisplay for markdown, and the editor's conversion bridge.
 include("inline_math.jl")
+# Giac derivations in a notebook: notes as paragraphs, steps as aligned display blocks.
+include("derivation.jl")
 
 # The notebook only ever calls these. The front-end (the `Mathfield` renderer + the inline-math editor
 # extension + its giac bridge handlers) wires itself up on `using GiacSlate` — no boot cell, no exports.

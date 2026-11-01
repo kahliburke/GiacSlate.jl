@@ -12,3 +12,9 @@ SlateExtensionsBase = "bc31d39e-4442-48fa-b9ae-1bd99fed63f7"
 Giac = "0.14.2"
 JSON = "1.6.1"
 SlateExtensionsBase = "0.10, 0.11"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
